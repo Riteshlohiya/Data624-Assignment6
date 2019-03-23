@@ -5,7 +5,7 @@ date: "March 20, 2019"
 output: html_document
 ---
 
-#Data624 Assignmen
+#Data624 Assignment 6
 
 
 ```{r}
