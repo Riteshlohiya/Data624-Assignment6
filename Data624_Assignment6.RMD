@@ -1,0 +1,343 @@
+---
+title: "Data624 Assignment6"
+author: "Ritesh Lohiya"
+date: "March 20, 2019"
+output: html_document
+---
+
+#Data624 Assignmen
+
+
+```{r}
+suppressMessages(suppressWarnings(library(fpp2)))
+suppressMessages(suppressWarnings(library(readxl)))
+suppressMessages(suppressWarnings(library(seasonal)))
+suppressMessages(suppressWarnings(library(rdatamarket)))
+suppressMessages(suppressWarnings(library(tseries)))
+```
+
+##Question 1
+
+
+
+#### Figure 8.24 shows the ACFs for 36 random numbers, 360 random numbers and for 1,000 random numbers. 
+
+#### a. Explain the differences among these figures.  Do they all indicate the data are white noise?
+
+#### Answer:
+
+#### The 3 plots indicate that the data is white noise because none of the  spikes are larger than the critical value range(the correlations are below the blue line so there is a lag)
+
+
+
+#### b. Why are the critical values at different distances from the mean of zero? Why are the autocorrelations different in each figure when they each refer to white noise? 
+
+####Answer: 
+
+#### As the sample size increases the critical values get smaller, so the cricial value region gets smaller as the sample size increases. The formula for the critical values is +/- 1.96/(sqrt(T - d)) where T is the sample size and d is the amount of differencing used. 
+
+## Question 2:
+
+#### A classic example of a non-stationary series is the daily closing IBM stock prices (data set ibmclose). Use R to plot the daily closing prices for IBM stock and the ACF and PACF. Explain how each plot shows the series is non-stationary and should be differenced.
+
+
+#### Answer:
+
+```{r}
+plot(ibmclose)
+plot(acf(ibmclose))
+plot(pacf(ibmclose))
+```
+
+#### There is clearly a trend element throughout the plot. The ACF plot shows that there is significant autocorrelations, so the data should be differenced in order to remove autocorrelation.
+
+#### PACF plot shows that there is a strong correlation between IBM stock data and the one lagged values. 
+
+#### Differencing will help stabilize the mean of a time series and eliminate or reduce trend and seasonality to make it stationary.
+
+## Question 3
+
+#### For the following series, find an appropriate Box-Cox transformation and order of differencing in order to obtain stationary data.
+
+```{r}
+transform.plot <- function(x){
+  lam <- BoxCox.lambda(x)
+  transformed <- BoxCox(x, lambda = lam)
+  tsdisplay(transformed)
+  return(paste("Box-Cox Lambda = ", round(lam, 4)))
+}
+```
+
+#### a. usnetelec
+
+```{r}
+data("usnetelec")
+transform.plot(usnetelec)
+
+```
+
+#### The series needs one differencing in order to be stationary.
+
+#### b. usgdp
+
+```{r}
+data("usgdp")
+transform.plot(usgdp)
+```
+
+#### Same, the series needs one differencing in order to be stationary.
+
+#### c. mcopper
+
+```{r}
+data("mcopper")
+transform.plot(mcopper)
+```
+
+#### Here we need 2 steps of differencing.
+
+
+#### d. enplanements
+
+```{r}
+data("enplanements")
+transform.plot(enplanements)
+```
+
+#### Here we need one differencing and seasonal differencing to be stationary.
+
+#### e. visitors
+
+```{r}
+data("visitors")
+transform.plot(visitors)
+```
+
+#### Here we need one differencing and seasonal differencing to be stationary.
+
+## Question 4
+
+####For your retail data (from Exercise 3 in Section 2.10), find the appropriate order of differencing (after transformation if necessary) to obtain stationary data.
+
+```{r}
+retaildata <- readxl::read_excel("C:/Users/rites/Documents/GitHub/Data624_Assignment1/retail.xlsx", skip=1)
+myts <- ts(retaildata[,"A3349873A"],frequency=12, start=c(1982,4))
+autoplot(myts) + xlab("Time") + ylab("Sales")
+```
+
+This data have increasing trend and strong seasonality, so use first differencing and seasonal differencing and then apply Box-Cox transformation.
+
+```{r}
+ndiffs(myts)
+```
+
+```{r}
+nsdiffs(myts)
+```
+
+#### First differencing and 1 seasonal differencing will be good here.
+
+
+## Question 5
+
+#### Use R to simulate and plot some data from simple ARIMA models.
+
+#### a. Use the following R code to generate data from an AR(1) model with phi1 = 0.6 and sigma^2 = 1. The process starts with y1 = 0.
+
+
+```{r}
+y <- ts(numeric(100))
+e <- rnorm(100)
+for(i in 2:100){
+   y[i] <- 0.6*y[i-1] + e[i]
+
+}
+```
+
+
+#### b. Produce a time plot for the series. How does the plot change as you change phi1?
+
+
+```{r}
+ar1generator <- function(phi1){
+  # generate 100 data points from an AR(1) model with input phi1.
+  y <- ts(numeric(100))
+  # error 'e's have variation sigma^2 as 1.
+  e <- rnorm(100)
+  for(i in 2:100){
+    y[i] <- phi1*y[i-1] + e[i]
+  }
+  return(y)
+}
+# produce plots changing phi1 value.
+
+autoplot(ar1generator(0.3), series = "0.3") +   geom_line(size = 1, colour = "red") +   autolayer(y, series = "0.6", size = 1) +   autolayer(ar1generator(0.9), size = 1, series = "0.9") +   ylab("AR(1) models") +  guides(colour = guide_legend(title = "Phi1"))
+```
+
+#### As phi increases, the variation of y increased.
+
+    
+
+#### c. Write your own code to generate data from an MA(1) model with theta1 = 0.6 and sigma^2 = 1.
+
+```{r}
+ma1generator <- function(theta1){
+  # generate 100 data points from an MA(1) model with input theta1.
+
+  y <- ts(numeric(100))
+  # error 'e's have variation sigma^2 as 1.
+  e <- rnorm(100)
+  for(i in 2:100){
+    y[i] <- theta1*e[i-1] + e[i]
+  }
+  return(y)
+}
+
+```
+
+    
+
+#### d. Produce a time plot for the series. How does the plot change as you change theta1?
+
+```{r}
+# produce plots changing theta1 value.
+
+autoplot(ma1generator(0.3), series = "0.3") +   geom_line(size = 1, colour = "red") +  autolayer(y, series = "0.6", size = 1) +   autolayer(ar1generator(0.9), size = 1, series = "0.9") +   ylab("MA(1) models") + guides(colour = guide_legend(title = "Theta1"))
+```  
+  
+
+#### As theta increases, the variation of y increased.
+
+    
+
+#### e. Generate data from an ARMA(1,1) model with phi1 = 0.6, theta1 = 0.6 and sigma^2 = 1.
+
+```{r}
+y_arima.1.0.1 <- ts(numeric(50))
+e <- rnorm(50)
+for(i in 2:50){
+y_arima.1.0.1[i] <- 0.6*y_arima.1.0.1[i-1] + 0.6*e[i-1] + e[i]
+}
+
+```
+
+
+#### f. Generate data from an AR(2) model with phi1 = -0.8, phi2 = 0.3 and sigma^2 = 1. (Note that these parameters will give a non-stationary series.)
+
+```{r}
+y_arima.2.0.0 <- ts(numeric(50))
+e <- rnorm(50)
+for(i in 3:50){
+y_arima.2.0.0[i] <- -0.8*y_arima.2.0.0[i-1] + 0.3*y_arima.2.0.0[i-2] + e[i]
+}
+
+```
+
+    
+
+#### g. Graph the latter two series and compare them.
+
+```{r}
+
+autoplot(y_arima.1.0.1, series = "ARMA(1, 1)") +  autolayer(y_arima.2.0.0, series = "AR(2)") +  ylab("y") + guides(colour = guide_legend(title = "Models"))
+autoplot(y_arima.1.0.1)
+```
+
+#### data from an AR(2) model increased with oscillation. They are non-staionary data. But data from an ARMA(1, 1) model were stationary.
+
+
+
+##  Question 6
+
+####Consider the number of women murdered each year (per 100,000 standard population) in the United States. (Data set wmurders).
+ 
+#### a. By studying appropriate graphs of the series in R, find an appropriate ARIMA(p,d,q) model for these data. 
+
+
+```{r}
+autoplot(wmurders)
+# It looked like the data don't need seasonal differencing or Box-Cox transformation.
+autoplot(diff(wmurders))
+# It looked like 1 more differencing would be needed to make the data stationary. Differenced data slowly go to minus infinity.
+ndiffs(wmurders)
+# ndiffs function shows that the data need 2 differencing.
+autoplot(diff(wmurders, differences = 2))
+kpss.test(diff(wmurders, differences = 2))
+# twice differencing made the data stationary.
+diff(wmurders, differences = 2) %>% ggtsdisplay()
+```
+
+#### PACF is decaying. And there are significant spikes at lag 1, and 2 in the ACF, but none beyond lag 2. If the data can be modelled by ARIMA(0, 2, q) or ARIMA(p, 2, 0), I'm going to model the data by ARIMA(0, 2, 2).
+
+
+
+#### b. Should you include a constant in the model? Explain.
+
+#### ARIMA model of the data includes twice differencing. If there is a constant in the model, twice integrated contant will yield quadratic trend, which is dangerous for forecasting. Therefore I won't include a constant in the model.
+
+
+
+#### c. Write this model in terms of the backshift operator.
+
+#### (1 - B)^2*yt = (1 + theta1*B + theta2*B^2)*et
+
+
+
+#### d. Fit the model using R and examine the residuals. Is the model satisfactory?
+
+```{r}
+
+wmurders_arima.0.2.2 <- Arima(wmurders,order = c(0, 2, 2))
+checkresiduals(wmurders_arima.0.2.2)
+# The residuals of the model can be thought of as white noise series. A little sorry that they aren't normally distributed. But it is satisfactory to get them.
+
+```
+
+#### e. Forecast three times ahead. Check your forecasts by hand to make sure that you know how they have been calculated.
+
+```{r}
+fc_wmurders_arima.0.2.2 <- forecast(  wmurders_arima.0.2.2, h = 3)
+# forecasts by Arima function
+fc_wmurders_arima.0.2.2$mean
+# get forecasts by manual calculation
+fc_wmurders_arima.0.2.2$model
+# formula
+# (1 - B)^2*yt = (1 - 1.0181*B + 0.1470*B^2)*et
+# yt = 2yt-1 - yt-2 + et - 1.0181*et-1 + 0.1470*et-2
+years <- length(wmurders)
+e <- fc_wmurders_arima.0.2.2$residuals
+fc1 <- 2*wmurders[years] - wmurders[years - 1] - 1.0181*e[years] + 0.1470*e[years - 1]
+fc2 <- 2*fc1 - wmurders[years] + 0.1470*e[years]
+fc3 <- 2*fc2 - fc1
+# forecasts by manual calculation
+c(fc1, fc2, fc3)
+```
+
+#### The forecasts are almost similar to the ones got by Arima function.
+
+#### f. Create a plot of the series with forecasts and prediction intervals for the next three periods shown.
+
+```{r}
+autoplot(fc_wmurders_arima.0.2.2)
+```
+
+#### g. Does auto.arima give the same model you have chosen? If not, which model do you think is better?
+
+```{r}
+fc_wmurders_autoarima <- forecast(auto.arima(wmurders), h = 3)
+# Without RMSE, all errors show that ARIMA(0, 2, 2) is better than ARIMA(1, 2, 1).
+accuracy(fc_wmurders_arima.0.2.2)
+accuracy(fc_wmurders_autoarima)
+# try using auto.arima function with stepwise and approximation options false.
+fc_wmurders_autoarima2 <- forecast(
+  auto.arima(wmurders, stepwise = FALSE, approximation = FALSE), h = 3)
+# It is ARIMA(0, 2, 3) model.
+accuracy(fc_wmurders_autoarima2)
+# In this case, some errors were better while others were worse. I'll check residuals and ACF, PACF plots.
+ggtsdisplay(diff(wmurders, differences = 2))
+# It looked like that the data are similar to ARIMA(0, 2, 2) rather than ARIMA(0, 2, 3
+checkresiduals(fc_wmurders_arima.0.2.2)
+checkresiduals(fc_wmurders_autoarima2)
+```
+
+#### Similar residuals. Therefore we choose ARIMA(0, 2, 2).
