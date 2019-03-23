@@ -256,14 +256,31 @@ autoplot(y_arima.1.0.1)
 
 ```{r}
 autoplot(wmurders)
-# It looked like the data don't need seasonal differencing or Box-Cox transformation.
+```
+
+#### It looked like the data don't need seasonal differencing or Box-Cox transformation.
+
+```{r}
 autoplot(diff(wmurders))
-# It looked like 1 more differencing would be needed to make the data stationary. Differenced data slowly go to minus infinity.
+```
+
+
+#### It looked like 1 more differencing would be needed to make the data stationary. Differenced data slowly go to minus infinity.
+
+```{r}
 ndiffs(wmurders)
-# ndiffs function shows that the data need 2 differencing.
+```
+
+#### ndiffs function shows that the data need 2 differencing.
+
+```{r}
 autoplot(diff(wmurders, differences = 2))
 kpss.test(diff(wmurders, differences = 2))
-# twice differencing made the data stationary.
+```
+
+#### twice differencing made the data stationary.
+
+```{r}
 diff(wmurders, differences = 2) %>% ggtsdisplay()
 ```
 
@@ -286,12 +303,12 @@ diff(wmurders, differences = 2) %>% ggtsdisplay()
 #### d. Fit the model using R and examine the residuals. Is the model satisfactory?
 
 ```{r}
-
 wmurders_arima.0.2.2 <- Arima(wmurders,order = c(0, 2, 2))
 checkresiduals(wmurders_arima.0.2.2)
-# The residuals of the model can be thought of as white noise series. A little sorry that they aren't normally distributed. But it is satisfactory to get them.
-
 ```
+
+#### The residuals of the model can be thought of as white noise series. A little sorry that they aren't normally distributed. But it is satisfactory to get them.
+
 
 #### e. Forecast three times ahead. Check your forecasts by hand to make sure that you know how they have been calculated.
 
@@ -325,17 +342,38 @@ autoplot(fc_wmurders_arima.0.2.2)
 
 ```{r}
 fc_wmurders_autoarima <- forecast(auto.arima(wmurders), h = 3)
-# Without RMSE, all errors show that ARIMA(0, 2, 2) is better than ARIMA(1, 2, 1).
+```
+
+#### Without RMSE, all errors show that ARIMA(0, 2, 2) is better than ARIMA(1, 2, 1).
+
+```{r}
 accuracy(fc_wmurders_arima.0.2.2)
 accuracy(fc_wmurders_autoarima)
-# try using auto.arima function with stepwise and approximation options false.
+```
+
+
+#### try using auto.arima function with stepwise and approximation options false.
+
+```{r}
 fc_wmurders_autoarima2 <- forecast(
   auto.arima(wmurders, stepwise = FALSE, approximation = FALSE), h = 3)
-# It is ARIMA(0, 2, 3) model.
+```
+
+#### It is ARIMA(0, 2, 3) model. 
+
+```{r}
 accuracy(fc_wmurders_autoarima2)
-# In this case, some errors were better while others were worse. I'll check residuals and ACF, PACF plots.
+```
+
+#### In this case, some errors were better while others were worse. I'll check residuals and ACF, PACF plots.
+
+```{r}
 ggtsdisplay(diff(wmurders, differences = 2))
-# It looked like that the data are similar to ARIMA(0, 2, 2) rather than ARIMA(0, 2, 3
+```
+
+#### It looked like that the data are similar to ARIMA(0, 2, 2) rather than ARIMA(0, 2, 3
+
+```{r}
 checkresiduals(fc_wmurders_arima.0.2.2)
 checkresiduals(fc_wmurders_autoarima2)
 ```
